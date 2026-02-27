@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView, Pressable, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 import { KitbaseIcon } from '@/components/kitbase-icon';
 import { SearchBar } from '@/components/search-bar';
@@ -9,15 +10,26 @@ import { ThemedView } from '@/components/themed-view';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { categories, getToolsByCategory, searchTools } from '@/constants/tools';
 
+const IMPLEMENTED_TOOL_HREFS = ['/tools/pdf/merge'];
+
 export default function AllToolsScreen() {
   const [query, setQuery] = useState('');
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const cardBg = useThemeColor({}, 'card');
   const cardBorder = useThemeColor({}, 'cardBorder');
   const iconColor = useThemeColor({}, 'icon');
 
   const searchResults = query.trim() ? searchTools(query) : [];
   const showSearchResults = query.trim().length > 0;
+
+  const openTool = (tool) => {
+    if (IMPLEMENTED_TOOL_HREFS.includes(tool.href)) {
+      router.push(tool.href);
+    } else {
+      Alert.alert('Coming soon', `${tool.name} will be available in a future update.`);
+    }
+  };
 
   return (
     <ThemedView style={styles.screen}>
@@ -54,11 +66,13 @@ export default function AllToolsScreen() {
             {searchResults.length > 0 ? (
               <View style={styles.toolsGrid}>
                 {searchResults.map((tool) => (
-                  <ThemedView
+                  <Pressable
                     key={tool.href}
-                    style={[
+                    onPress={() => openTool(tool)}
+                    style={({ pressed }) => [
                       styles.toolCard,
                       { backgroundColor: cardBg, borderColor: cardBorder },
+                      pressed && styles.toolCardPressed,
                     ]}
                   >
                     <View
@@ -79,7 +93,7 @@ export default function AllToolsScreen() {
                     <ThemedText style={styles.toolDescription} numberOfLines={2}>
                       {tool.description}
                     </ThemedText>
-                  </ThemedView>
+                  </Pressable>
                 ))}
               </View>
             ) : (
@@ -113,11 +127,13 @@ export default function AllToolsScreen() {
 
                   <View style={styles.toolsGrid}>
                     {categoryTools.map((tool) => (
-                      <ThemedView
+                      <Pressable
                         key={tool.href}
-                        style={[
+                        onPress={() => openTool(tool)}
+                        style={({ pressed }) => [
                           styles.toolCard,
                           { backgroundColor: cardBg, borderColor: cardBorder },
+                          pressed && styles.toolCardPressed,
                         ]}
                       >
                         <View
@@ -138,7 +154,7 @@ export default function AllToolsScreen() {
                         <ThemedText style={styles.toolDescription} numberOfLines={2}>
                           {tool.description}
                         </ThemedText>
-                      </ThemedView>
+                      </Pressable>
                     ))}
                   </View>
                 </View>
@@ -217,6 +233,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     gap: 8,
+  },
+  toolCardPressed: {
+    opacity: 0.85,
   },
   toolIconWrap: {
     width: 36,

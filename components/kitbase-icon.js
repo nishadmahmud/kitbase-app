@@ -40,6 +40,9 @@ import {
   BarChart,
   LineChart,
   Search,
+  GitMerge,
+  Share2,
+  X,
 } from 'lucide-react-native';
 
 const ICON_MAP = {
@@ -80,6 +83,9 @@ const ICON_MAP = {
   Info,
   BarChart,
   LineChart,
+  Merge: GitMerge,
+  Share: Share2,
+  X,
 };
 
 export function KitbaseIcon({ name, size = 22, color, style }) {

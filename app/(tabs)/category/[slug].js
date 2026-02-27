@@ -1,5 +1,5 @@
-import { StyleSheet, View, ScrollView } from 'react-native';
-import { Link, useLocalSearchParams } from 'expo-router';
+import { StyleSheet, View, ScrollView, Pressable, Alert } from 'react-native';
+import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { KitbaseIcon } from '@/components/kitbase-icon';
@@ -8,15 +8,26 @@ import { ThemedView } from '@/components/themed-view';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { getToolsByCategory, getCategoryBySlug } from '@/constants/tools';
 
+const IMPLEMENTED_TOOL_HREFS = ['/tools/pdf/merge'];
+
 export default function CategoryScreen() {
   const { slug } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const cardBg = useThemeColor({}, 'card');
   const cardBorder = useThemeColor({}, 'cardBorder');
   const iconColor = useThemeColor({}, 'icon');
 
   const category = slug ? getCategoryBySlug(slug) : null;
   const tools = category ? getToolsByCategory(slug) : [];
+
+  const openTool = (tool) => {
+    if (IMPLEMENTED_TOOL_HREFS.includes(tool.href)) {
+      router.push(tool.href);
+    } else {
+      Alert.alert('Coming soon', `${tool.name} will be available in a future update.`);
+    }
+  };
 
   if (!category) {
     return (
@@ -73,9 +84,14 @@ export default function CategoryScreen() {
 
         <View style={styles.toolsGrid}>
           {tools.map((tool) => (
-            <ThemedView
+            <Pressable
               key={tool.href}
-              style={[styles.toolCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
+              onPress={() => openTool(tool)}
+              style={({ pressed }) => [
+                styles.toolCard,
+                { backgroundColor: cardBg, borderColor: cardBorder },
+                pressed && { opacity: 0.85 },
+              ]}
             >
               <View style={[styles.toolIconWrap, { backgroundColor: cardBorder }]}>
                 <KitbaseIcon name={tool.iconName} size={20} color={iconColor} />
@@ -86,7 +102,7 @@ export default function CategoryScreen() {
               <ThemedText style={styles.toolDescription} numberOfLines={2}>
                 {tool.description}
               </ThemedText>
-            </ThemedView>
+            </Pressable>
           ))}
         </View>
       </ScrollView>

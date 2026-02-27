@@ -140,6 +140,10 @@ export function getToolsByCategory(categorySlug) {
   return tools.filter((t) => t.category === categorySlug);
 }
 
+export function getToolByHref(href) {
+  return tools.find((t) => t.href === href) ?? null;
+}
+
 export function getCategoryBySlug(slug) {
   return categories.find((c) => c.slug === slug);
 }
