@@ -5,25 +5,32 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+// Match web app's slate/gray aesthetic and blue accent
+const tintColorLight = '#2563eb'; // blue-600
+const tintColorDark = '#60a5fa'; // blue-400
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
+    text: '#0f172a', // gray-900
+    background: '#f8fafc', // slate-50
     tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
+    icon: '#64748b', // slate-500
+    tabIconDefault: '#64748b',
     tabIconSelected: tintColorLight,
+    card: '#ffffff',
+    cardBorder: '#e2e8f0', // slate-200
+    subtle: '#f1f5f9', // slate-100
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
+    text: '#e5e7eb', // gray-200
+    background: '#020617', // gray-950
     tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
+    icon: '#9ca3af', // gray-400
+    tabIconDefault: '#9ca3af',
     tabIconSelected: tintColorDark,
+    card: '#020617',
+    cardBorder: '#1f2937', // gray-800
+    subtle: '#030712', // gray-950-ish
   },
 };
 

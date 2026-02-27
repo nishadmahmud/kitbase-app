@@ -12,6 +12,9 @@ const MAPPING = {
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
+  'square.grid.2x2': 'apps',
+  'heart.fill': 'favorite',
+  'gearshape.fill': 'settings',
 };
 
 export function IconSymbol({ name, size = 24, color, style }) {
