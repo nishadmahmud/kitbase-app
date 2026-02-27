@@ -148,4 +148,15 @@ export function getPopularTools() {
   return tools.filter((t) => t.popular);
 }
 
+export function searchTools(query) {
+  const q = (query || '').toLowerCase().trim();
+  if (!q) return [];
+  return tools.filter(
+    (t) =>
+      t.name.toLowerCase().includes(q) ||
+      t.description.toLowerCase().includes(q) ||
+      t.category.toLowerCase().includes(q)
+  );
+}
+
 export const popularTools = getPopularTools();

@@ -1,17 +1,23 @@
+import { useState } from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { KitbaseIcon } from '@/components/kitbase-icon';
+import { SearchBar } from '@/components/search-bar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { categories, getToolsByCategory } from '@/constants/tools';
+import { categories, getToolsByCategory, searchTools } from '@/constants/tools';
 
 export default function AllToolsScreen() {
+  const [query, setQuery] = useState('');
   const insets = useSafeAreaInsets();
   const cardBg = useThemeColor({}, 'card');
   const cardBorder = useThemeColor({}, 'cardBorder');
   const iconColor = useThemeColor({}, 'icon');
+
+  const searchResults = query.trim() ? searchTools(query) : [];
+  const showSearchResults = query.trim().length > 0;
 
   return (
     <ThemedView style={styles.screen}>
@@ -21,6 +27,7 @@ export default function AllToolsScreen() {
           { paddingTop: Math.max(16, insets.top) },
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
           <ThemedText type="title">All Tools</ThemedText>
@@ -29,62 +36,116 @@ export default function AllToolsScreen() {
           </ThemedText>
         </View>
 
-        <View style={styles.sections}>
-          {categories.map((cat) => {
-            const categoryTools = getToolsByCategory(cat.slug);
-            return (
-              <View key={cat.slug} style={styles.categorySection}>
-                <View style={styles.categoryHeader}>
-                  <View
+        <View style={styles.searchBarWrap}>
+          <SearchBar
+            placeholder="Search tools…"
+            value={query}
+            onChangeText={setQuery}
+          />
+        </View>
+
+        {showSearchResults ? (
+          <View style={styles.searchSection}>
+            <ThemedText type="subtitle" style={styles.searchResultsTitle}>
+              {searchResults.length > 0
+                ? `${searchResults.length} result${searchResults.length === 1 ? '' : 's'}`
+                : 'No tools found'}
+            </ThemedText>
+            {searchResults.length > 0 ? (
+              <View style={styles.toolsGrid}>
+                {searchResults.map((tool) => (
+                  <ThemedView
+                    key={tool.href}
                     style={[
-                      styles.categoryIconWrap,
+                      styles.toolCard,
                       { backgroundColor: cardBg, borderColor: cardBorder },
                     ]}
                   >
-                    <KitbaseIcon name={cat.iconName} size={22} color={cat.color} />
-                  </View>
-                  <View style={styles.categoryHeaderText}>
-                    <ThemedText type="subtitle">{cat.name}</ThemedText>
-                    <ThemedText style={styles.toolCount}>
-                      {categoryTools.length} tools
-                    </ThemedText>
-                  </View>
-                </View>
-
-                <View style={styles.toolsGrid}>
-                  {categoryTools.map((tool) => (
-                    <ThemedView
-                      key={tool.href}
+                    <View
                       style={[
-                        styles.toolCard,
+                        styles.toolIconWrap,
+                        { backgroundColor: cardBorder },
+                      ]}
+                    >
+                      <KitbaseIcon
+                        name={tool.iconName}
+                        size={20}
+                        color={iconColor}
+                      />
+                    </View>
+                    <ThemedText type="defaultSemiBold" style={styles.toolName} numberOfLines={1}>
+                      {tool.name}
+                    </ThemedText>
+                    <ThemedText style={styles.toolDescription} numberOfLines={2}>
+                      {tool.description}
+                    </ThemedText>
+                  </ThemedView>
+                ))}
+              </View>
+            ) : (
+              <ThemedText style={styles.noResults}>
+                No tools match &quot;{query.trim()}&quot;
+              </ThemedText>
+            )}
+          </View>
+        ) : (
+          <View style={styles.sections}>
+            {categories.map((cat) => {
+              const categoryTools = getToolsByCategory(cat.slug);
+              return (
+                <View key={cat.slug} style={styles.categorySection}>
+                  <View style={styles.categoryHeader}>
+                    <View
+                      style={[
+                        styles.categoryIconWrap,
                         { backgroundColor: cardBg, borderColor: cardBorder },
                       ]}
                     >
-                      <View
+                      <KitbaseIcon name={cat.iconName} size={22} color={cat.color} />
+                    </View>
+                    <View style={styles.categoryHeaderText}>
+                      <ThemedText type="subtitle">{cat.name}</ThemedText>
+                      <ThemedText style={styles.toolCount}>
+                        {categoryTools.length} tools
+                      </ThemedText>
+                    </View>
+                  </View>
+
+                  <View style={styles.toolsGrid}>
+                    {categoryTools.map((tool) => (
+                      <ThemedView
+                        key={tool.href}
                         style={[
-                          styles.toolIconWrap,
-                          { backgroundColor: cardBorder },
+                          styles.toolCard,
+                          { backgroundColor: cardBg, borderColor: cardBorder },
                         ]}
                       >
-                        <KitbaseIcon
-                          name={tool.iconName}
-                          size={20}
-                          color={iconColor}
-                        />
-                      </View>
-                      <ThemedText type="defaultSemiBold" style={styles.toolName} numberOfLines={1}>
-                        {tool.name}
-                      </ThemedText>
-                      <ThemedText style={styles.toolDescription} numberOfLines={2}>
-                        {tool.description}
-                      </ThemedText>
-                    </ThemedView>
-                  ))}
+                        <View
+                          style={[
+                            styles.toolIconWrap,
+                            { backgroundColor: cardBorder },
+                          ]}
+                        >
+                          <KitbaseIcon
+                            name={tool.iconName}
+                            size={20}
+                            color={iconColor}
+                          />
+                        </View>
+                        <ThemedText type="defaultSemiBold" style={styles.toolName} numberOfLines={1}>
+                          {tool.name}
+                        </ThemedText>
+                        <ThemedText style={styles.toolDescription} numberOfLines={2}>
+                          {tool.description}
+                        </ThemedText>
+                      </ThemedView>
+                    ))}
+                  </View>
                 </View>
-              </View>
-            );
-          })}
-        </View>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
     </ThemedView>
   );
@@ -99,10 +160,23 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   subtitle: {
     marginTop: 8,
+    fontSize: 15,
+    opacity: 0.85,
+  },
+  searchBarWrap: {
+    marginBottom: 20,
+  },
+  searchSection: {
+    gap: 12,
+  },
+  searchResultsTitle: {
+    marginBottom: 4,
+  },
+  noResults: {
     fontSize: 15,
     opacity: 0.85,
   },

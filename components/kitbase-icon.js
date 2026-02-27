@@ -39,10 +39,12 @@ import {
   Info,
   BarChart,
   LineChart,
+  Search,
 } from 'lucide-react-native';
 
 const ICON_MAP = {
   FileText,
+  Search,
   Eraser,
   Scissors,
   ArrowUpDown,

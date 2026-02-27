@@ -1,12 +1,42 @@
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
 import { Link } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { KitbaseIcon } from '@/components/kitbase-icon';
+import { SearchBar } from '@/components/search-bar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { categories, popularTools } from '@/constants/tools';
+
+function SearchSection() {
+  const cardBg = useThemeColor({}, 'card');
+  const cardBorder = useThemeColor({}, 'cardBorder');
+  const iconColor = useThemeColor({}, 'icon');
+
+  return (
+    <Link href="/(tabs)/all-tools" asChild>
+      <Pressable
+        style={({ pressed }) => [
+          styles.searchFakeBar,
+          {
+            backgroundColor: cardBg,
+            borderColor: cardBorder,
+            borderWidth: 1,
+            opacity: pressed ? 0.85 : 1,
+          },
+        ]}
+      >
+        <View style={styles.searchFakeRow}>
+          <KitbaseIcon name="Search" size={20} color={iconColor} style={styles.searchFakeIcon} />
+          <ThemedText style={styles.searchFakePlaceholder} numberOfLines={1}>
+            Search PDF, image, dev tools…
+          </ThemedText>
+        </View>
+      </Pressable>
+    </Link>
+  );
+}
 
 function HeroSection() {
   const heroBg = useThemeColor({}, 'subtle');
@@ -62,11 +92,15 @@ function PopularToolsSection() {
               <View style={[styles.toolIconWrap, { backgroundColor: cardBorder }]}>
                 <KitbaseIcon name={tool.iconName} size={20} color={iconColor} />
               </View>
-              <ThemedText type="defaultSemiBold" style={styles.toolTitle}>
+              <ThemedText type="defaultSemiBold" style={styles.toolTitle} numberOfLines={1}>
                 {tool.name}
               </ThemedText>
-              <ThemedText style={styles.toolCategory}>{catInfo ? catInfo.name : tool.category}</ThemedText>
-              <ThemedText style={styles.toolDescription}>{tool.description}</ThemedText>
+              <ThemedText style={styles.toolCategory} numberOfLines={1}>
+                {catInfo ? catInfo.name : tool.category}
+              </ThemedText>
+              <ThemedText style={styles.toolDescription} numberOfLines={2}>
+                {tool.description}
+              </ThemedText>
             </ThemedView>
           );
         })}
@@ -86,27 +120,33 @@ function CategoriesSection() {
       </ThemedText>
       <View style={styles.categoriesGrid}>
         {categories.map((cat) => (
-          <ThemedView
-            key={cat.slug}
-            style={[styles.categoryCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
-          >
-            <View style={[styles.categoryIconBubble, { backgroundColor: `${cat.color}1A` }]}>
-              <KitbaseIcon name={cat.iconName} size={22} color={cat.color} />
-            </View>
-            <View style={styles.categoryText}>
-              <ThemedText type="defaultSemiBold" style={styles.categoryTitle}>
-                {cat.name}
-              </ThemedText>
-              <ThemedText style={styles.categoryDescription}>{cat.description}</ThemedText>
-              <View style={styles.categoryTagsRow}>
-                {cat.tags.slice(0, 3).map((tag) => (
-                  <ThemedText key={tag} style={styles.categoryTag}>
-                    {tag}
-                  </ThemedText>
-                ))}
-              </View>
-            </View>
-          </ThemedView>
+          <View key={cat.slug} style={styles.categoryCardWrap}>
+            <Link href={`/category/${cat.slug}`} asChild>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.categoryCard,
+                  { backgroundColor: cardBg, borderColor: cardBorder, opacity: pressed ? 0.85 : 1 },
+                ]}
+              >
+                <View style={[styles.categoryIconBubble, { backgroundColor: `${cat.color}1A` }]}>
+                  <KitbaseIcon name={cat.iconName} size={20} color={cat.color} />
+                </View>
+                <ThemedText type="defaultSemiBold" style={styles.categoryTitle} numberOfLines={1}>
+                  {cat.name}
+                </ThemedText>
+                <ThemedText style={styles.categoryDescription} numberOfLines={2}>
+                  {cat.description}
+                </ThemedText>
+                <View style={styles.categoryTagsRow}>
+                  {cat.tags.slice(0, 3).map((tag) => (
+                    <ThemedText key={tag} style={styles.categoryTag}>
+                      {tag}
+                    </ThemedText>
+                  ))}
+                </View>
+              </Pressable>
+            </Link>
+          </View>
         ))}
       </View>
     </View>
@@ -126,6 +166,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <HeroSection />
+        <SearchSection />
         <PopularToolsSection />
         <CategoriesSection />
       </ScrollView>
@@ -161,6 +202,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginTop: 20,
+  },
+  searchFakeBar: {
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginTop: 4,
+    width: '100%',
+  },
+  searchFakeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  searchFakeIcon: {
+    opacity: 0.8,
+  },
+  searchFakePlaceholder: {
+    flex: 1,
+    fontSize: 16,
+    opacity: 0.7,
+    minWidth: 0,
   },
   primaryButton: {
     flex: 1,
@@ -202,82 +264,80 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   popularGrid: {
-    gap: 12,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
   },
   toolCard: {
-    borderRadius: 18,
-    padding: 14,
+    width: '48%',
+    borderRadius: 14,
+    padding: 12,
     borderWidth: 1,
+    gap: 6,
   },
   toolIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
   },
   toolTitle: {
-    marginBottom: 2,
+    fontSize: 14,
+    marginBottom: 0,
   },
   toolCategory: {
-    fontSize: 12,
+    fontSize: 11,
     opacity: 0.85,
-    marginBottom: 4,
+    marginBottom: 0,
   },
   toolDescription: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     opacity: 0.9,
   },
   categoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
   },
+  categoryCardWrap: {
+    width: '48%',
+  },
   categoryCard: {
-    flexDirection: 'row',
-    padding: 14,
-    borderRadius: 18,
+    padding: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    alignItems: 'flex-start',
-    gap: 12,
+    gap: 6,
   },
   categoryIconBubble: {
-    width: 40,
-    height: 40,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  categoryDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 999,
-  },
-  categoryText: {
-    flex: 1,
-    gap: 4,
-  },
   categoryTitle: {
-    fontSize: 15,
+    fontSize: 14,
   },
   categoryDescription: {
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 15,
     opacity: 0.9,
   },
   categoryTagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 4,
+    gap: 4,
+    marginTop: 2,
   },
   categoryTag: {
-    fontSize: 10,
+    fontSize: 9,
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 999,
+    letterSpacing: 0.6,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
     opacity: 0.8,
   },
 });
