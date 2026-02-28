@@ -71,7 +71,7 @@ export default function PdfToImageContent() {
         filePath = dest;
       }
 
-      const results = await pdfToImages(filePath, 90);
+      const results = await pdfToImages(filePath, 2.0);
       setImages(results);
     } catch (e) {
       setError(e.message ?? 'Conversion failed. Make sure you are using a dev build, not Expo Go.');
