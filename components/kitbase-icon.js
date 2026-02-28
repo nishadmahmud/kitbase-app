@@ -43,6 +43,9 @@ import {
   GitMerge,
   Share2,
   X,
+  GripVertical,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react-native';
 
 const ICON_MAP = {
@@ -86,6 +89,9 @@ const ICON_MAP = {
   Merge: GitMerge,
   Share: Share2,
   X,
+  GripVertical,
+  ChevronUp,
+  ChevronDown,
 };
 
 export function KitbaseIcon({ name, size = 22, color, style }) {

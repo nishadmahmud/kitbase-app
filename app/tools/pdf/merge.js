@@ -44,7 +44,8 @@ export default function MergePdfScreen() {
 
       if (result.canceled) return;
 
-      const newFiles = result.assets.map((a) => ({
+      const newFiles = result.assets.map((a, i) => ({
+        id: `pdf-${Date.now()}-${i}`,
         uri: a.uri,
         name: a.name ?? 'Document.pdf',
         size: a.size ?? 0,
@@ -57,10 +58,21 @@ export default function MergePdfScreen() {
     }
   };
 
-  const removeFile = (index) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+  const removeFile = (id) => {
+    setFiles((prev) => prev.filter((f) => f.id !== id));
     setResultUri(null);
     setError(null);
+  };
+
+  const moveFile = (index, direction) => {
+    const next = index + direction;
+    if (next < 0 || next >= files.length) return;
+    setFiles((prev) => {
+      const arr = [...prev];
+      [arr[index], arr[next]] = [arr[next], arr[index]];
+      return arr;
+    });
+    setResultUri(null);
   };
 
   const clearAll = () => {
@@ -139,8 +151,8 @@ export default function MergePdfScreen() {
         </Pressable>
 
         {files.length > 0 && (
-          <ThemedView style={[styles.fileListCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-            <View style={styles.fileListHeader}>
+          <View style={styles.thumbSection}>
+            <View style={styles.thumbSectionHeader}>
               <ThemedText type="defaultSemiBold" style={styles.fileCount}>
                 {files.length} file{files.length !== 1 ? 's' : ''} added
               </ThemedText>
@@ -148,23 +160,61 @@ export default function MergePdfScreen() {
                 <ThemedText style={styles.clearText}>Clear all</ThemedText>
               </Pressable>
             </View>
-            {files.map((file, i) => (
-              <View key={`${file.uri}-${i}`} style={[styles.fileRow, i < files.length - 1 && styles.fileRowBorder, { borderColor: cardBorder }]}>
-                <KitbaseIcon name="FileText" size={18} color={cardBorder} />
-                <View style={styles.fileInfo}>
-                  <ThemedText style={styles.fileName} numberOfLines={1}>
-                    {file.name}
+            <ThemedText style={styles.dragHint}>
+              Tap ↑ ↓ to reorder
+            </ThemedText>
+            {files.map((item, index) => (
+              <View
+                key={item.id}
+                style={[
+                  styles.thumbRow,
+                  { backgroundColor: cardBg, borderColor: cardBorder },
+                ]}
+              >
+                <View style={[styles.thumbNumBadge, { backgroundColor: tint }]}>
+                  <ThemedText style={[styles.thumbNumText, { color: '#fff' }]}>{index + 1}</ThemedText>
+                </View>
+                <View style={styles.reorderWrap}>
+                  <Pressable
+                    onPress={() => moveFile(index, -1)}
+                    disabled={index === 0}
+                    style={[styles.reorderBtn, index === 0 && styles.reorderBtnDisabled]}
+                    hitSlop={6}
+                  >
+                    <KitbaseIcon name="ChevronUp" size={18} color={index === 0 ? cardBorder : tint} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => moveFile(index, 1)}
+                    disabled={index === files.length - 1}
+                    style={[styles.reorderBtn, index === files.length - 1 && styles.reorderBtnDisabled]}
+                    hitSlop={6}
+                  >
+                    <KitbaseIcon name="ChevronDown" size={18} color={index === files.length - 1 ? cardBorder : tint} />
+                  </Pressable>
+                </View>
+                <View style={[styles.thumbIconWrap, { backgroundColor: cardBorder }]}>
+                  <KitbaseIcon name="FileText" size={22} color={tint} />
+                </View>
+                <View style={styles.thumbTextWrap}>
+                  <ThemedText style={styles.thumbFileName} numberOfLines={1} ellipsizeMode="middle">
+                    {item.name}
                   </ThemedText>
-                  {file.size > 0 && (
-                    <ThemedText style={styles.fileSize}>{formatFileSize(file.size)}</ThemedText>
+                  {item.size > 0 && (
+                    <ThemedText style={styles.thumbFileSize}>
+                      {formatFileSize(item.size)}
+                    </ThemedText>
                   )}
                 </View>
-                <Pressable onPress={() => removeFile(i)} hitSlop={8} style={styles.removeWrap}>
-                  <KitbaseIcon name="X" size={18} color="#ef4444" />
+                <Pressable
+                  onPress={() => removeFile(item.id)}
+                  hitSlop={8}
+                  style={[styles.thumbRemove, { backgroundColor: cardBg, borderColor: cardBorder }]}
+                >
+                  <KitbaseIcon name="X" size={14} color="#ef4444" />
                 </Pressable>
               </View>
             ))}
-          </ThemedView>
+          </View>
         )}
 
         <Pressable
@@ -264,19 +314,15 @@ const styles = StyleSheet.create({
   pickButtonText: {
     fontSize: 16,
   },
-  fileListCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: 'hidden',
+  thumbSection: {
     marginBottom: 20,
   },
-  fileListHeader: {
+  thumbSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(128,128,128,0.08)',
+    marginBottom: 12,
+    paddingHorizontal: 2,
   },
   fileCount: {
     fontSize: 14,
@@ -285,30 +331,69 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#ef4444',
   },
-  fileRow: {
+  dragHint: {
+    fontSize: 12,
+    opacity: 0.7,
+    marginBottom: 10,
+  },
+  thumbRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+    gap: 10,
   },
-  fileRowBorder: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
+  thumbNumBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  fileInfo: {
+  thumbNumText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  reorderWrap: {
+    flexDirection: 'column',
+    gap: 0,
+  },
+  reorderBtn: {
+    padding: 2,
+  },
+  reorderBtnDisabled: {
+    opacity: 0.4,
+  },
+  thumbIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.9,
+  },
+  thumbTextWrap: {
     flex: 1,
     minWidth: 0,
   },
-  fileName: {
+  thumbFileName: {
     fontSize: 14,
   },
-  fileSize: {
+  thumbFileSize: {
     fontSize: 12,
     opacity: 0.7,
     marginTop: 2,
   },
-  removeWrap: {
-    padding: 4,
+  thumbRemove: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
   },
   mergeButton: {
     flexDirection: 'row',
