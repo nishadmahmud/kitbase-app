@@ -58,6 +58,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="tool"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="explore"
         options={{
           href: null,

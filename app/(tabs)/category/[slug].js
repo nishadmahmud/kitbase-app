@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, Pressable, Alert } from 'react-native';
+import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,8 +7,6 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { getToolsByCategory, getCategoryBySlug } from '@/constants/tools';
-
-const IMPLEMENTED_TOOL_HREFS = ['/tools/pdf/merge'];
 
 export default function CategoryScreen() {
   const { slug } = useLocalSearchParams();
@@ -22,11 +20,9 @@ export default function CategoryScreen() {
   const tools = category ? getToolsByCategory(slug) : [];
 
   const openTool = (tool) => {
-    if (IMPLEMENTED_TOOL_HREFS.includes(tool.href)) {
-      router.push(tool.href);
-    } else {
-      Alert.alert('Coming soon', `${tool.name} will be available in a future update.`);
-    }
+    const toolPath = tool.href.replace(/^\/tools\/?/, '') || '';
+    const target = toolPath ? `/(tabs)/tool/${toolPath}` : '/(tabs)/tool';
+    router.push(target);
   };
 
   if (!category) {

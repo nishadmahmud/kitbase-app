@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   StyleSheet,
   View,
-  ScrollView,
   Pressable,
   ActivityIndicator,
   Alert,
@@ -17,16 +16,15 @@ import { ThemedView } from '@/components/themed-view';
 import { KitbaseIcon } from '@/components/kitbase-icon';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { mergePdfUris } from '@/lib/pdf/merge';
-import { formatFileSize } from '@/lib/utils/file';
+import { formatFileSize, uint8ArrayToBase64 } from '@/lib/utils/file';
 
 const PDF_MIME = 'application/pdf';
 
-export default function MergePdfScreen() {
+export default function MergePdfContent() {
   const insets = useSafeAreaInsets();
   const cardBg = useThemeColor({}, 'card');
   const cardBorder = useThemeColor({}, 'cardBorder');
   const tint = useThemeColor({}, 'tint');
-  const destructive = useThemeColor({}, 'text'); // fallback; we'll use red for remove
 
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -122,171 +120,147 @@ export default function MergePdfScreen() {
   };
 
   return (
-    <ThemedView style={styles.screen}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: Math.max(24, insets.bottom) },
+    <View
+      style={[
+        styles.scrollContent,
+        { paddingBottom: Math.max(24, insets.bottom) },
+      ]}
+    >
+      <ThemedText style={styles.description}>
+        Combine multiple PDF files into a single document. Select at least 2
+        files, then tap Merge.
+      </ThemedText>
+
+      <Pressable
+        onPress={pickPdfs}
+        style={({ pressed }) => [
+          styles.pickButton,
+          { backgroundColor: cardBg, borderColor: cardBorder },
+          pressed && styles.pickButtonPressed,
         ]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
       >
-        <ThemedText style={styles.description}>
-          Combine multiple PDF files into a single document. Select at least 2
-          files, then tap Merge.
+        <KitbaseIcon name="FileText" size={22} color={tint} />
+        <ThemedText type="defaultSemiBold" style={[styles.pickButtonText, { color: tint }]}>
+          Select PDF files
         </ThemedText>
+      </Pressable>
 
-        <Pressable
-          onPress={pickPdfs}
-          style={({ pressed }) => [
-            styles.pickButton,
-            { backgroundColor: cardBg, borderColor: cardBorder },
-            pressed && styles.pickButtonPressed,
-          ]}
-        >
-          <KitbaseIcon name="FileText" size={22} color={tint} />
-          <ThemedText type="defaultSemiBold" style={[styles.pickButtonText, { color: tint }]}>
-            Select PDF files
-          </ThemedText>
-        </Pressable>
-
-        {files.length > 0 && (
-          <View style={styles.thumbSection}>
-            <View style={styles.thumbSectionHeader}>
-              <ThemedText type="defaultSemiBold" style={styles.fileCount}>
-                {files.length} file{files.length !== 1 ? 's' : ''} added
-              </ThemedText>
-              <Pressable onPress={clearAll} hitSlop={8}>
-                <ThemedText style={styles.clearText}>Clear all</ThemedText>
-              </Pressable>
-            </View>
-            <ThemedText style={styles.dragHint}>
-              Tap ↑ ↓ to reorder
+      {files.length > 0 && (
+        <View style={styles.thumbSection}>
+          <View style={styles.thumbSectionHeader}>
+            <ThemedText type="defaultSemiBold" style={styles.fileCount}>
+              {files.length} file{files.length !== 1 ? 's' : ''} added
             </ThemedText>
-            {files.map((item, index) => (
-              <View
-                key={item.id}
-                style={[
-                  styles.thumbRow,
-                  { backgroundColor: cardBg, borderColor: cardBorder },
-                ]}
-              >
-                <View style={[styles.thumbNumBadge, { backgroundColor: tint }]}>
-                  <ThemedText style={[styles.thumbNumText, { color: '#fff' }]}>{index + 1}</ThemedText>
-                </View>
-                <View style={styles.reorderWrap}>
-                  <Pressable
-                    onPress={() => moveFile(index, -1)}
-                    disabled={index === 0}
-                    style={[styles.reorderBtn, index === 0 && styles.reorderBtnDisabled]}
-                    hitSlop={6}
-                  >
-                    <KitbaseIcon name="ChevronUp" size={18} color={index === 0 ? cardBorder : tint} />
-                  </Pressable>
-                  <Pressable
-                    onPress={() => moveFile(index, 1)}
-                    disabled={index === files.length - 1}
-                    style={[styles.reorderBtn, index === files.length - 1 && styles.reorderBtnDisabled]}
-                    hitSlop={6}
-                  >
-                    <KitbaseIcon name="ChevronDown" size={18} color={index === files.length - 1 ? cardBorder : tint} />
-                  </Pressable>
-                </View>
-                <View style={[styles.thumbIconWrap, { backgroundColor: cardBorder }]}>
-                  <KitbaseIcon name="FileText" size={22} color={tint} />
-                </View>
-                <View style={styles.thumbTextWrap}>
-                  <ThemedText style={styles.thumbFileName} numberOfLines={1} ellipsizeMode="middle">
-                    {item.name}
-                  </ThemedText>
-                  {item.size > 0 && (
-                    <ThemedText style={styles.thumbFileSize}>
-                      {formatFileSize(item.size)}
-                    </ThemedText>
-                  )}
-                </View>
+            <Pressable onPress={clearAll} hitSlop={8}>
+              <ThemedText style={styles.clearText}>Clear all</ThemedText>
+            </Pressable>
+          </View>
+          <ThemedText style={styles.dragHint}>
+            Tap ↑ ↓ to reorder
+          </ThemedText>
+          {files.map((item, index) => (
+            <View
+              key={item.id}
+              style={[
+                styles.thumbRow,
+                { backgroundColor: cardBg, borderColor: cardBorder },
+              ]}
+            >
+              <View style={[styles.thumbNumBadge, { backgroundColor: tint }]}>
+                <ThemedText style={[styles.thumbNumText, { color: '#fff' }]}>{index + 1}</ThemedText>
+              </View>
+              <View style={styles.reorderWrap}>
                 <Pressable
-                  onPress={() => removeFile(item.id)}
-                  hitSlop={8}
-                  style={[styles.thumbRemove, { backgroundColor: cardBg, borderColor: cardBorder }]}
+                  onPress={() => moveFile(index, -1)}
+                  disabled={index === 0}
+                  style={[styles.reorderBtn, index === 0 && styles.reorderBtnDisabled]}
+                  hitSlop={6}
                 >
-                  <KitbaseIcon name="X" size={14} color="#ef4444" />
+                  <KitbaseIcon name="ChevronUp" size={18} color={index === 0 ? cardBorder : tint} />
+                </Pressable>
+                <Pressable
+                  onPress={() => moveFile(index, 1)}
+                  disabled={index === files.length - 1}
+                  style={[styles.reorderBtn, index === files.length - 1 && styles.reorderBtnDisabled]}
+                  hitSlop={6}
+                >
+                  <KitbaseIcon name="ChevronDown" size={18} color={index === files.length - 1 ? cardBorder : tint} />
                 </Pressable>
               </View>
-            ))}
-          </View>
-        )}
+              <View style={[styles.thumbIconWrap, { backgroundColor: cardBorder }]}>
+                <KitbaseIcon name="FileText" size={22} color={tint} />
+              </View>
+              <View style={styles.thumbTextWrap}>
+                <ThemedText style={styles.thumbFileName} numberOfLines={1} ellipsizeMode="middle">
+                  {item.name}
+                </ThemedText>
+                {item.size > 0 && (
+                  <ThemedText style={styles.thumbFileSize}>
+                    {formatFileSize(item.size)}
+                  </ThemedText>
+                )}
+              </View>
+              <Pressable
+                onPress={() => removeFile(item.id)}
+                hitSlop={8}
+                style={[styles.thumbRemove, { backgroundColor: cardBg, borderColor: cardBorder }]}
+              >
+                <KitbaseIcon name="X" size={14} color="#ef4444" />
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      )}
 
-        <Pressable
-          onPress={merge}
-          disabled={files.length < 2 || loading}
-          style={({ pressed }) => [
-            styles.mergeButton,
-            { backgroundColor: tint },
-            (files.length < 2 || loading) && styles.mergeButtonDisabled,
-            pressed && !loading && files.length >= 2 && styles.mergeButtonPressed,
-          ]}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <>
-              <KitbaseIcon name="Merge" size={20} color="#fff" />
-              <ThemedText type="defaultSemiBold" style={styles.mergeButtonText}>
-                Merge {files.length > 1 ? `${files.length} PDFs` : 'PDFs'}
-              </ThemedText>
-            </>
-          )}
-        </Pressable>
-
-        {error ? (
-          <ThemedView style={[styles.messageBox, styles.errorBox]}>
-            <ThemedText style={styles.errorText}>{error}</ThemedText>
-          </ThemedView>
-        ) : null}
-
-        {resultUri ? (
-          <ThemedView style={[styles.messageBox, styles.successBox, { borderColor: cardBorder }]}>
-            <ThemedText type="defaultSemiBold" style={styles.successText}>
-              PDFs merged successfully!
+      <Pressable
+        onPress={merge}
+        disabled={files.length < 2 || loading}
+        style={({ pressed }) => [
+          styles.mergeButton,
+          { backgroundColor: tint },
+          (files.length < 2 || loading) && styles.mergeButtonDisabled,
+          pressed && !loading && files.length >= 2 && styles.mergeButtonPressed,
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <>
+            <KitbaseIcon name="Merge" size={20} color="#fff" />
+            <ThemedText type="defaultSemiBold" style={styles.mergeButtonText}>
+              Merge {files.length > 1 ? `${files.length} PDFs` : 'PDFs'}
             </ThemedText>
-            <Pressable
-              onPress={shareResult}
-              style={({ pressed }) => [styles.shareButton, { backgroundColor: tint }, pressed && styles.shareButtonPressed]}
-            >
-              <KitbaseIcon name="Share" size={18} color="#fff" />
-              <ThemedText type="defaultSemiBold" style={styles.shareButtonText}>
-                Share / Save PDF
-              </ThemedText>
-            </Pressable>
-          </ThemedView>
-        ) : null}
-      </ScrollView>
-    </ThemedView>
+          </>
+        )}
+      </Pressable>
+
+      {error ? (
+        <ThemedView style={[styles.messageBox, styles.errorBox]}>
+          <ThemedText style={styles.errorText}>{error}</ThemedText>
+        </ThemedView>
+      ) : null}
+
+      {resultUri ? (
+        <ThemedView style={[styles.messageBox, styles.successBox, { borderColor: cardBorder }]}>
+          <ThemedText type="defaultSemiBold" style={styles.successText}>
+            PDFs merged successfully!
+          </ThemedText>
+          <Pressable
+            onPress={shareResult}
+            style={({ pressed }) => [styles.shareButton, { backgroundColor: tint }, pressed && styles.shareButtonPressed]}
+          >
+            <KitbaseIcon name="Share" size={18} color="#fff" />
+            <ThemedText type="defaultSemiBold" style={styles.shareButtonText}>
+              Share / Save PDF
+            </ThemedText>
+          </Pressable>
+        </ThemedView>
+      ) : null}
+    </View>
   );
 }
 
-const BASE64_CHAR = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
-function uint8ArrayToBase64(bytes) {
-  const len = bytes.byteLength;
-  let result = '';
-  for (let i = 0; i < len; i += 3) {
-    const a = bytes[i];
-    const b = i + 1 < len ? bytes[i + 1] : 0;
-    const c = i + 2 < len ? bytes[i + 2] : 0;
-    result += BASE64_CHAR[a >> 2];
-    result += BASE64_CHAR[((a & 3) << 4) | (b >> 4)];
-    result += i + 1 < len ? BASE64_CHAR[((b & 15) << 2) | (c >> 6)] : '=';
-    result += i + 2 < len ? BASE64_CHAR[c & 63] : '=';
-  }
-  return result;
-}
-
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 16,

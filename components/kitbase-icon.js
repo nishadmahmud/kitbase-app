@@ -46,6 +46,7 @@ import {
   GripVertical,
   ChevronUp,
   ChevronDown,
+  Minus,
 } from 'lucide-react-native';
 
 const ICON_MAP = {
@@ -92,6 +93,8 @@ const ICON_MAP = {
   GripVertical,
   ChevronUp,
   ChevronDown,
+  Minus,
+  Split: Scissors,
 };
 
 export function KitbaseIcon({ name, size = 22, color, style }) {
